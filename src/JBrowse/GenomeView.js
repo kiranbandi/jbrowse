@@ -2582,13 +2582,15 @@ var resetReadwearTimer = function(width, left) {
 var markReadWearTimer = new Timer(() => {
     // add a new readwear marker by pushing a clone of the object 
     // objects are copied by refernce in javascript :-D
-    readHistory.push({ width: currentStore.width, left: currentStore.left });
-    //  remove the oldest marker
-    readHistory = readHistory.slice(1, 6);
-    document.querySelectorAll('#readwear .readwear-block').forEach((element, iterator) => {
-        element.style.width = readHistory[iterator].width + 'px';
-        element.style.left = readHistory[iterator].left + 'px';
-    });
+    if (currentStore.width < 400) {
+        readHistory.push({ width: currentStore.width, left: currentStore.left });
+        //  remove the oldest marker
+        readHistory = readHistory.slice(1, 6);
+        document.querySelectorAll('#readwear .readwear-block').forEach((element, iterator) => {
+            element.style.width = readHistory[iterator].width + 'px';
+            element.style.left = readHistory[iterator].left + 'px';
+        });
+    }
     markReadWearTimer.stop();
 }, resetTime);
 
