@@ -1,6 +1,6 @@
 const url = cjsRequire('url')
 
-import packagejson from './package.json'
+// import packagejson from './package.json'
 define([
         'dojo/_base/declare',
         'dojo/_base/lang',
@@ -262,7 +262,8 @@ define([
             version: function() {
                 // when a build is put together, the build system assigns a string
                 // to the variable below.
-                return packagejson.version;
+                // return packagejson.version;
+                return '1.0.0';
             }.call(),
 
 
@@ -1440,7 +1441,7 @@ define([
                         '  <div class="tagline">A next-generation genome browser<br> built with JavaScript and HTML5.</div>' +
                         '  <a class="mainsite" target="_blank" href="http://jbrowse.org">JBrowse website</a>' +
                         '  <div class="gmod">JBrowse is a <a target="_blank" href="http://gmod.org">GMOD</a> project.</div>' +
-                        '  <div class="copyright">' + packagejson.copyright + '</div>' +
+                        '  <div class="copyright">' + '</div>' +
                         ((Object.keys(this.plugins).length > 1 && !this.config.noPluginsForAboutBox) ? (
                             '  <div class="loaded-plugins">Loaded plugins<ul class="plugins-list">' +
                             array.map(Object.keys(this.plugins), function(elt) {

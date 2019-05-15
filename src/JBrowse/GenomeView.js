@@ -147,7 +147,7 @@ define([
                     readwearBox.className = 'readwear-block';
                     readwearBox.style.width = readwearBlock.width + 'px';
                     readwearBox.style.left = readwearBlock.left + 'px';
-                    readwearBox.style.top = (((+iterator) * 15) + 2.5) + 'px';
+                    readwearBox.style.top = (((+iterator) * 12) + 2.5) + 'px';
                     this.readwear.appendChild(readwearBox);
                     return readwearBlock;
                 })
@@ -1486,6 +1486,11 @@ define([
                 "left: " + trapLeft + "px; " +
                 "width: " + (trapRight - trapLeft) + "px;" +
                 "z-index: 20";
+
+            // reset read wear tracking with new position by passing width and left position
+            resetReadwearTimer(trapRight - trapLeft, trapLeft);
+
+
         },
 
         checkY: function(y) {
@@ -2562,15 +2567,52 @@ License 2.0.  Refer to LICENSE for the full license text.
 
 */
 
-var readHistory = [{ 'width': 10, 'left': 100 },
-    { 'width': 40, 'left': 450 },
-    { 'width': 21, 'left': 800 },
-    { 'width': 100, 'left': 150 },
-    { 'width': 500, 'left': 200 }
-];
+var readHistory = Array.apply(null, Array(5)).map(() => ({ 'width': 0, 'left': 0, 'duration': 0 }));
+var currentStore = {};
 
-var updateHistory = function(readHistory) {
+var resetTime = 5000;
 
-    document.querySelectorAll('#readwear history-block');
 
+var resetReadwearTimer = function(width, left) {
+    markReadWearTimer.reset(resetTime);
+    currentStore.width = width;
+    currentStore.left = left;
+}
+
+var markReadWearTimer = new Timer(() => {
+    // add a new readwear marker by pushing a clone of the object 
+    // objects are copied by refernce in javascript :-D
+    readHistory.push({ width: currentStore.width, left: currentStore.left });
+    //  remove the oldest marker
+    readHistory = readHistory.slice(1, 6);
+    document.querySelectorAll('#readwear .readwear-block').forEach((element, iterator) => {
+        element.style.width = readHistory[iterator].width + 'px';
+        element.style.left = readHistory[iterator].left + 'px';
+    });
+    markReadWearTimer.stop();
+}, resetTime);
+
+//  code sourced from stackoverflow - https://stackoverflow.com/questions/8126466/how-do-i-reset-the-setinterval-timer
+function Timer(fn, t) {
+    var timerObj = setInterval(fn, t);
+
+    this.stop = function() {
+        if (timerObj) {
+            clearInterval(timerObj);
+            timerObj = null;
+        }
+        return this;
+    }
+
+    // start timer using current settings (if it's not already running)
+    this.start = function() {
+        if (!timerObj) {
+            this.stop();
+            timerObj = setInterval(fn, t);
+        }
+        return this;
+    }
+
+    // start with new interval, stop current interval
+    this.reset = function() { return this.stop().start() };
 }
