@@ -1,0 +1,12 @@
+div.readWearBar {
+    position: relative;
+    padding: 1px 0;
+    height: 75px;
+    background: #d5ade2;
+    text-align: right;
+    .readwear-block {
+        position: absolute;
+        height: 10px;
+        background: red;
+    }
+}
