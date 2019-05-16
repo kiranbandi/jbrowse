@@ -134,24 +134,32 @@ define([
             //width, in pixels of the "regular" (not min or max zoom) stripe
             this.regularStripe = stripeWidth;
 
-
             this.overview = this.browser.overviewDiv;
             this.overviewBox = dojo.marginBox(this.overview);
 
             // kiran code start //
+            // For every sequence create an array of 5 readwear marks
+            Object.keys(this.browser.allRefs).map((refSeqID) => {
+                readHistory[refSeqID] = Array.apply(null, Array(5)).map(() => ({ 'width': 0, 'left': 0, 'duration': 0, 'ref': {} }))
+            });
+
             this.readwear = this.browser.readWearBarDiv;
             this.readwearBox = dojo.marginBox(this.readwear);
-            //  five history elements , create 5 empty divs the first time
-            this.readwearBlocks = readHistory.map(function(readwearBlock, iterator) {
-                    var readwearBox = document.createElement('div');
-                    readwearBox.className = 'readwear-block';
-                    readwearBox.style.width = readwearBlock.width + 'px';
-                    readwearBox.style.left = readwearBlock.left + 'px';
-                    readwearBox.style.top = (((+iterator) * 12) + 2.5) + 'px';
-                    this.readwear.appendChild(readwearBox);
-                    return readwearBlock;
-                })
-                // kiran code end //
+            //  five history elements , create 5 empty divs the first time for default ref seq
+            this.readwearBlocks = readHistory[this.browser.refSeq.name].map(function(readwearBlock, iterator) {
+                var readwearBox = document.createElement('div');
+                readwearBox.className = 'readwear-block';
+                readwearBox.style.width = readwearBlock.width + 'px';
+                readwearBox.style.left = readwearBlock.left + 'px';
+                readwearBox.style.top = (((+iterator) * 12) + 2.5) + 'px';
+                readwearBox.addEventListener('click', function() {
+                    var historyTag = readHistory[this.browser.refSeq.name][event.target.id.split("-")[1]];
+                    this.browser.navigateToLocation(historyTag.ref);
+                }.bind(this));
+                this.readwear.appendChild(readwearBox);
+                return readwearBlock;
+            }.bind(this));
+            // kiran code end //
 
             this.tracks = [];
             this.uiTracks = [];
@@ -991,7 +999,6 @@ define([
             if (Math.abs(start.x - end.x) < 3) {
                 return;
             }
-
             exec.call(this, h_start_bp, h_end_bp);
         },
 
@@ -1488,9 +1495,7 @@ define([
                 "z-index: 20";
 
             // reset read wear tracking with new position by passing width and left position
-            resetReadwearTimer(trapRight - trapLeft, trapLeft);
-
-
+            resetReadwearTimer(trapRight - trapLeft, trapLeft, { name: this.ref.name, start: startbp, end: endbp });
         },
 
         checkY: function(y) {
@@ -2567,29 +2572,47 @@ License 2.0.  Refer to LICENSE for the full license text.
 
 */
 
-var readHistory = Array.apply(null, Array(5)).map(() => ({ 'width': 0, 'left': 0, 'duration': 0 }));
+var readHistory = {};
 var currentStore = {};
-
 var resetTime = 5000;
 
 
-var resetReadwearTimer = function(width, left) {
+var resetReadwearTimer = function(width, left, ref) {
+
+    // if refname has changed then trigger an update ,
+    // because this means user has switched sequences
+    if (ref.name != currentStore.refName) {
+        currentStore.refName = ref.name;
+        updateReadwearBlocks();
+    }
+
     markReadWearTimer.reset(resetTime);
     currentStore.width = width;
     currentStore.left = left;
+    // shallow cloning by value
+    currentStore.ref = JSON.parse(JSON.stringify(ref));
+    currentStore.refName = ref.name;
+}
+
+var updateReadwearBlocks = function() {
+    document.querySelectorAll('#readwear .readwear-block').forEach((element, iterator) => {
+        element.style.width = readHistory[currentStore.refName][iterator].width + 'px';
+        element.style.left = readHistory[currentStore.refName][iterator].left + 'px';
+        element.id = 'store-' + iterator;
+    });
 }
 
 var markReadWearTimer = new Timer(() => {
     // add a new readwear marker by pushing a clone of the object 
     // objects are copied by refernce in javascript :-D
-    if (currentStore.width < 400) {
-        readHistory.push({ width: currentStore.width, left: currentStore.left });
+    var lastElement = readHistory[currentStore.refName][readHistory[currentStore.refName].length - 1];
+    if (currentStore.width < 400 && (lastElement.width != currentStore.width || lastElement.left != currentStore.left)) {
+        // shallow clone again
+        readHistory[currentStore.refName].push(JSON.parse(JSON.stringify(currentStore)));
         //  remove the oldest marker
-        readHistory = readHistory.slice(1, 6);
-        document.querySelectorAll('#readwear .readwear-block').forEach((element, iterator) => {
-            element.style.width = readHistory[iterator].width + 'px';
-            element.style.left = readHistory[iterator].left + 'px';
-        });
+        readHistory[currentStore.refName] = readHistory[currentStore.refName].slice(1, 6);
+        // trigger change on DOM
+        updateReadwearBlocks();
     }
     markReadWearTimer.stop();
 }, resetTime);
