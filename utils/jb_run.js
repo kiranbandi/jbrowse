@@ -38,7 +38,7 @@ var dispPort = "";
 if (port !== 80) dispPort = ":"+port;
 
 
-app.use('/'+(opt.options['suburi']||''), express.static(
+app.use('/jbrowse'+(opt.options['suburi']||''), express.static(
     jbrowsePath,
     {
         // set Content-Encoding: gzip on .jsonz and .gz files
