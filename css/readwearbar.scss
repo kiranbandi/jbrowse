@@ -9,5 +9,12 @@ div.readWearBar {
         height: 7.5px;
         background: #ff000052;
         border-radius: 10px;
+        transition: height 0.20s;
+        cursor: pointer;
+        &:hover,
+        &:focus {
+            background: red;
+            height: 8.5px;
+        }
     }
 }
